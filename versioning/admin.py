@@ -61,10 +61,6 @@ def patch_admin_models():
     for model in _registry:
         if model in admin.site._registry:
             model_admin = admin.site._registry[model]
-            """inline = type('{0}RevisionInline'.format(model.__name__),
-                          (generic.GenericTabularInline, ),
-                          {'model': Event,
-                           'extra': 1, })"""
             cls = model_admin.__class__
             if RevisionInline not in cls.inlines:
                 cls.inlines = list(cls.inlines)  # tuple to list
