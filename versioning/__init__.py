@@ -1,6 +1,3 @@
-
-from versioning.utils import revisions_for_object
-
 _registry = {}
 
 class AlreadyRegistered(Exception):
