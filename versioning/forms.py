@@ -1,20 +1,38 @@
 from django import forms
 from django.utils.safestring import mark_safe
+from django.utils.translation import ugettext_lazy as _
 
 from .models import Revision
 
 
+class ReadOnlyInput(forms.Widget):
+    """Don't allows to edit Revision.delta"""
+    def render(self, name, value, attrs=None):
+        return mark_safe(u"<div>{0}</div>".format(value or ''))
+
+
 class RevisionReadonlyForm(forms.ModelForm):
 
-    fields = ("delta",)
+    reapply = forms.BooleanField(
+        label=_("Reapply this revision"),
+        required=False,
+        widget=forms.CheckboxInput(attrs={
+            'onclick': "this.form.elements._continue.click()"
+        })
+    )
+    delta_repr = forms.CharField(
+        label=_("Diff"),
+        required=False,
+        widget=ReadOnlyInput()
+    )
+    fields = ("reapply", "delta_repr", )
 
     def __init__(self, *a, **kw):
         """Instance constructor"""
         r = super(RevisionReadonlyForm, self).__init__(*a, **kw)
         if self.instance:
-            self.instance.delta = mark_safe(
+            self.initial['delta_repr'] = mark_safe(
                 self.instance.display_diff()
-                #self.instance.delta.replace("\n", "<br />")
             )
         return r
 
@@ -22,5 +40,10 @@ class RevisionReadonlyForm(forms.ModelForm):
         model = Revision
 
     def save(self, *a, **kw):
-        """Don't save"""
-        pass
+        """Don't saves, only reapply if need."""
+        if self.cleaned_data['reapply']:
+            info = getattr(self.instance, 'revision_info', {})
+            self.instance.reapply(
+                editor_ip=info.get('editor_ip'),
+                editor=info.get('editor'),
+            )

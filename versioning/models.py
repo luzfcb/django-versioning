@@ -139,6 +139,7 @@ class Revision(models.Model):
         result = []
         for field in fields:
             result.append(u"<b>{0}</b>".format(field))
-            diffs = dmp.diff_main(getattr(old, field), getattr(next_rev, field))
+            diffs = dmp.diff_main(getattr(old, field),
+                                  getattr(next_rev, field))
             result.append(dmp.diff_prettyHtml(diffs))
         return u"<br />\n".join(result)

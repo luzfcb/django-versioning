@@ -1,31 +1,34 @@
 
-from django.template import Library, Node, TemplateSyntaxError, Variable, resolve_variable
+from django.template import Library, Node, TemplateSyntaxError,\
+    Variable, resolve_variable
 
 from versioning.models import Revision
 
 register = Library()
 
+
 class RevisionsForObjectNode(Node):
     def __init__(self, obj, context_var):
         self.obj = Variable(obj)
         self.context_var = context_var
-    
+
     def render(self, context):
         context[self.context_var] = \
             Revision.objects.get_for_object(self.obj.resolve(context))
         return ""
 
+
 def do_revisions_for_object(parser, token):
     """
     Retrieves a list of ``Revision`` objects associated with an object and
     stores them in a context variable.
-    
+
     Usage::
-    
+
         {% revisions_for_object [object] as [varname] %}
-    
+
     Example::
-    
+
         {% revisions_for_object post as revisions %}
     """
     bits = token.contents.split()

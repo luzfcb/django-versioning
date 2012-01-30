@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.contenttypes.models import ContentType, ContentTypeManager
 
+
 class RevisionManager(ContentTypeManager):
     """Revision manager"""
 

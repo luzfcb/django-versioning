@@ -2,7 +2,7 @@ import subprocess
 import os.path
 
 try:
-    # don't get confused if our sdist is unzipped in a subdir of some 
+    # don't get confused if our sdist is unzipped in a subdir of some
     # other git repo
     if os.path.isdir('.git'):
         p = subprocess.Popen(['git', 'rev-parse', r'HEAD'],
@@ -13,7 +13,7 @@ try:
             fh.close()
 except (OSError, IndexError):
     pass
-    
+
 try:
     rev = open('VCSREV').read()
 except IOError:
