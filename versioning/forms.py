@@ -17,7 +17,7 @@ class RevisionReadonlyForm(forms.ModelForm):
         label=_("Reapply this revision"),
         required=False,
         widget=forms.CheckboxInput(attrs={
-            'onclick': "this.form.elements._continue.click()"
+            'onclick': "this.form.submit()"
         })
     )
     delta_repr = forms.CharField(
@@ -25,7 +25,6 @@ class RevisionReadonlyForm(forms.ModelForm):
         required=False,
         widget=ReadOnlyInput()
     )
-    fields = ("reapply", "delta_repr", )
 
     def __init__(self, *a, **kw):
         """Instance constructor"""
@@ -38,6 +37,7 @@ class RevisionReadonlyForm(forms.ModelForm):
 
     class Meta:
         model = Revision
+        fields = ("reapply", "delta_repr", )
 
     def save(self, *a, **kw):
         """Don't saves, only reapply if need."""
@@ -47,3 +47,9 @@ class RevisionReadonlyForm(forms.ModelForm):
                 editor_ip=info.get('editor_ip'),
                 editor=info.get('editor'),
             )
+
+        def save_m2m():
+            pass
+
+        self.save_m2m = save_m2m
+        return self.instance

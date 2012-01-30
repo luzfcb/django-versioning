@@ -1,6 +1,6 @@
 from difflib import SequenceMatcher
 
-from django.utils.encoding import smart_unicode
+#from django.utils.encoding import smart_unicode
 # Google Diff Match Patch library
 # http://code.google.com/p/google-diff-match-patch
 from diff_match_patch import diff_match_patch
