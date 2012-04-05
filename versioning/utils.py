@@ -27,8 +27,8 @@ def obj_diff(obj1, obj2):
     fields = _registry[model]
     lines = []
     for field in fields:
-        original_data = getattr(obj2, field)
-        new_data = getattr(obj1, field)
+        original_data = unicode(getattr(obj2, field) or "")
+        new_data = unicode(getattr(obj1, field) or "")
         #data_diff = unified_diff(original_data.splitlines(),
         #                         new_data.splitlines(), context=3)
         data_diff = diff(new_data, original_data)

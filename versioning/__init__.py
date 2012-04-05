@@ -19,7 +19,7 @@ def register(model, fields=None):
     else:
         for field in fields:
             f = opts.get_field(field)
-            if not isinstance(f, models.TextField):
+            if not isinstance(f, models.TextField) and False:
                 raise TypeError("""
                     versioning cannot handle anything other
                     than a TextField. {0} is of type {1}

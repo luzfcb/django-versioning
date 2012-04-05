@@ -90,9 +90,11 @@ class Revision(models.Model):
                 model2, field = key.split('.')
                 if model2 != model.__name__ or field not in fields:
                     continue
-                content = getattr(content_object, field)
+                content = unicode(getattr(content_object, field) or "")
                 patch = dmp.patch_fromText(diff)
                 content = dmp.patch_apply(patch, content)[0]
+                if content_object._meta.get_field(field).null and not len(content):
+                    content = None
                 setattr(content_object, field, content)
             changeset.reverted = True
             changeset.save()
@@ -134,12 +136,12 @@ class Revision(models.Model):
                 patches = dmp.patch_fromText(diff)
                 setattr(old, field,
                         dmp.patch_apply(patches,
-                                        getattr(old, field))[0])
+                                        unicode(getattr(old, field) or ""))[0])
 
         result = []
         for field in fields:
             result.append(u"<b>{0}</b>".format(field))
-            diffs = dmp.diff_main(getattr(old, field),
-                                  getattr(next_rev, field))
+            diffs = dmp.diff_main(unicode(getattr(old, field) or ""),
+                                  unicode(getattr(next_rev, field) or ""))
             result.append(dmp.diff_prettyHtml(diffs))
         return u"<br />\n".join(result)
