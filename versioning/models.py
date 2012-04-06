@@ -90,11 +90,18 @@ class Revision(models.Model):
                 model2, field = key.split('.')
                 if model2 != model.__name__ or field not in fields:
                     continue
-                content = unicode(getattr(content_object, field) or "")
+                content = unicode(getattr(content_object, field))
                 patch = dmp.patch_fromText(diff)
                 content = dmp.patch_apply(patch, content)[0]
-                if content_object._meta.get_field(field).null and not len(content):
+                fobj = content_object._meta.get_field(field)
+                if content == 'None' and fobj.null:
                     content = None
+                if fobj.get_internal_type() in ('BooleanField',
+                                                'NullBooleanField', ):
+                    if content == 'True':
+                        content = True
+                    elif content == 'False':
+                        content = False
                 setattr(content_object, field, content)
             changeset.reverted = True
             changeset.save()
@@ -136,12 +143,12 @@ class Revision(models.Model):
                 patches = dmp.patch_fromText(diff)
                 setattr(old, field,
                         dmp.patch_apply(patches,
-                                        unicode(getattr(old, field) or ""))[0])
+                                        unicode(getattr(old, field)))[0])
 
         result = []
         for field in fields:
             result.append(u"<b>{0}</b>".format(field))
-            diffs = dmp.diff_main(unicode(getattr(old, field) or ""),
-                                  unicode(getattr(next_rev, field) or ""))
+            diffs = dmp.diff_main(unicode(getattr(old, field)),
+                                  unicode(getattr(next_rev, field)))
             result.append(dmp.diff_prettyHtml(diffs))
         return u"<br />\n".join(result)
