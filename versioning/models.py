@@ -102,6 +102,7 @@ class Revision(models.Model):
                         content = True
                     elif content == 'False':
                         content = False
+                content = fobj.to_python(content)
                 setattr(content_object, field, content)
             changeset.reverted = True
             changeset.save()
