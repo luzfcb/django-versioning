@@ -7,7 +7,10 @@ def pre_save(instance, **kwargs):
     """Pre-save signal handler
     """
     model = kwargs["sender"]
-    original = model._default_manager.get(pk=instance.pk)
+    if instance.pk:
+        original = model._default_manager.get(pk=instance.pk)
+    else:
+        original = model()
     delta = obj_diff(instance, original)
     info = getattr(instance, 'revision_info', {})
     request = get_request()
