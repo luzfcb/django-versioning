@@ -7,9 +7,9 @@ def pre_save(instance, **kwargs):
     """Pre-save signal handler
     """
     model = kwargs["sender"]
-    if instance.pk:
+    try:
         original = model._default_manager.get(pk=instance.pk)
-    else:
+    except model.DoesNotExist:
         original = model()
     delta = obj_diff(instance, original)
     info = getattr(instance, 'revision_info', {})
