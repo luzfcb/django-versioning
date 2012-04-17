@@ -42,7 +42,7 @@ class Revision(models.Model):
     class Meta:
         verbose_name = _(u'Revision')
         verbose_name_plural = _(u'Revisions')
-        get_latest_by = 'created_at'
+        get_latest_by = 'id'
         ordering = ('-revision',)
         unique_together = (("object_id", "content_type", "revision"),)
 
@@ -63,7 +63,16 @@ class Revision(models.Model):
                 ).latest().revision + 1
             except self.DoesNotExist:
                 self.revision = 1
-        super(Revision, self).save(*a, **kw)
+        attempt = 0
+        while True:
+            try:
+                super(Revision, self).save(*a, **kw)
+                break
+            except IntegrityError:
+                self.revision += 1
+                attempt += 1
+                if attempt > 20:
+                    raise
 
     def is_anonymous_change(self):
         """Returns True if editor is not authenticated."""
