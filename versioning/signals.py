@@ -4,15 +4,19 @@ from .utils import obj_diff
 
 
 def pre_save(instance, **kwargs):
-    """Pre-save signal handler
+    """
+    Pre-save signal handler
     """
     model = kwargs["sender"]
+    if not hasattr(instance, 'revision_info'):
+        instance.revision_info = {}
+    info = instance.revision_info
+
     try:
         original = model._default_manager.get(pk=instance.pk)
     except model.DoesNotExist:
         original = model()
-    delta = obj_diff(instance, original)
-    info = getattr(instance, 'revision_info', {})
+    info['delta'] = obj_diff(instance, original)
     request = get_request()
     if request:
         if not info.get('editor'):
@@ -21,6 +25,14 @@ def pre_save(instance, **kwargs):
             info['editor_ip'] = request.META.get("REMOTE_ADDR")
     if not hasattr(info, 'editor') or not getattr(info['editor'], 'pk', None):
         info['editor'] = None
-    rev = Revision(delta=delta, **info)
-    rev.content_object = instance
-    rev.save()
+
+
+def post_save(instance, **kwargs):
+    """
+    Post-save signal handler
+    """
+    info = getattr(instance, 'revision_info', {})
+    if info:
+        rev = Revision(**info)
+        rev.content_object = instance
+        rev.save()

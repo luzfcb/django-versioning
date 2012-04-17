@@ -10,7 +10,7 @@ def register(model, fields=None):
     """
     from django.db import models
     from django.db.models import signals as model_signals
-    from versioning.signals import pre_save
+    from versioning.signals import pre_save, post_save
 
     opts = model._meta
 
@@ -31,3 +31,4 @@ def register(model, fields=None):
     _registry[model] = fields
 
     model_signals.pre_save.connect(pre_save, sender=model)
+    model_signals.post_save.connect(post_save, sender=model)
