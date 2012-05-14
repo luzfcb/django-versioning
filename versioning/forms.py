@@ -8,7 +8,7 @@ from .models import Revision
 class ReadOnlyInput(forms.Widget):
     """Don't allows to edit Revision.delta"""
     def render(self, name, value, attrs=None):
-        return mark_safe(u"<div>{0}</div>".format(value or ''))
+        return mark_safe(u"<div>{0}</div>".format(value))
 
 
 class RevisionReadonlyForm(forms.ModelForm):

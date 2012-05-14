@@ -23,7 +23,7 @@ def pre_save(instance, **kwargs):
             info['editor'] = request.user
         if not info.get('editor_ip'):
             info['editor_ip'] = request.META.get("REMOTE_ADDR")
-    if not hasattr(info, 'editor') or not getattr(info['editor'], 'pk', None):
+    if not getattr(info.get('editor'), 'pk', None):  # Anonymuous
         info['editor'] = None
 
 

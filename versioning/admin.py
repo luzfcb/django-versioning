@@ -8,10 +8,12 @@ from .utils import diff_split_by_fields
 
 class RevisionAdmin(admin.ModelAdmin):
     form = RevisionReadonlyForm
-    list_display = ("pk", "revision", "sha1", "content_type",\
-                    "object_id", "created_at", "editor", )
+    list_display = ("pk", "revision", "sha1", "content_type",
+                    "object_id", 'content_object', "created_at",
+                    "editor", "comment", )
     list_filter = ("created_at", "content_type", )
     fields = ("reapply", "delta_repr", )
+    ordering = ('-id', )
 
     def save_form(self, request, form, change, *a, **kw):
         """Binds to object the editor's info"""

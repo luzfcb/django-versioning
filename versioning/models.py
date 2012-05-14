@@ -2,7 +2,7 @@ import copy
 import hashlib
 from datetime import datetime
 
-from django.db import models
+from django.db import models, IntegrityError
 from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
@@ -43,7 +43,7 @@ class Revision(models.Model):
         verbose_name = _(u'Revision')
         verbose_name_plural = _(u'Revisions')
         get_latest_by = 'id'
-        ordering = ('-revision',)
+        ordering = ('-id',)
         unique_together = (("object_id", "content_type", "revision"),)
 
     def __unicode__(self):
@@ -117,7 +117,7 @@ class Revision(models.Model):
             changeset.save()
 
         content_object.revision_info = {
-            'comment': u"Reverted to revision #%s" % self.revision,
+            'comment': u"Reverted to revision #{0}".format(self.revision),
             'editor_ip': editor_ip,
             'editor': editor
         }
