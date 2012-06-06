@@ -1,7 +1,8 @@
-from django.contrib.contenttypes.models import ContentType, ContentTypeManager
+from django.db import models
+from django.contrib.contenttypes.models import ContentType
 
 
-class RevisionManager(ContentTypeManager):
+class RevisionManager(models.Manager):
     """Revision manager"""
 
     def get_for_object(self, obj):
