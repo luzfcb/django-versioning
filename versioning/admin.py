@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.contrib import admin
 
 from . import _registry
@@ -66,7 +67,7 @@ def make_admin_versionable(cls):
     return AdminVersionable
 
 
-def patch_admin_models():
+def autodiscover():
     """Adds RevisionInline for revisionable models."""
     for model in _registry:
         if model in admin.site._registry:
@@ -75,4 +76,5 @@ def patch_admin_models():
             admin.site.unregister(model)
             admin.site.register(model, make_admin_versionable(cls))
 
-patch_admin_models()
+if getattr(settings, 'VERSIONING_ADMIN_AUTODISCOVER', True):
+    autodiscover()
