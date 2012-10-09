@@ -1,11 +1,15 @@
 from __future__ import absolute_import, unicode_literals
+import sys
 from difflib import SequenceMatcher
 from django.utils.encoding import force_unicode
 
 #from django.utils.encoding import smart_unicode
 # Google Diff Match Patch library
 # http://code.google.com/p/google-diff-match-patch
-from .diff_match_patch import diff_match_patch
+if sys.version_info > (3, ):
+    from .vendor.diff_match_patch.python3.diff_match_patch import diff_match_patch
+else:
+    from .vendor.diff_match_patch.python2.diff_match_patch import diff_match_patch
 
 from versioning import _registry
 
