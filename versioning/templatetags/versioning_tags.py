@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 
 from django.template import Library, Node, TemplateSyntaxError,\
     Variable, resolve_variable
@@ -33,11 +34,13 @@ def do_revisions_for_object(parser, token):
     """
     bits = token.contents.split()
     if len(bits) != 4:
-        raise TemplateSyntaxError("'%s' tag requires exactly three "
-                                  "arguments" % bits[0])
+        raise TemplateSyntaxError(
+            "'{0}' tag requires exactly three arguments".format(bits[0])
+        )
     if bits[2] != "as":
-        raise TemplateSyntaxError("second argument to %s tag must be "
-                                  "'as'" % bits[0])
+        raise TemplateSyntaxError(
+            "second argument to {0} tag must be 'as'".format(bits[0])
+        )
     return RevisionsForObjectNode(bits[1], bits[3])
 
 register.tag("revisions_for_object", do_revisions_for_object)

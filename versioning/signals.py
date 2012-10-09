@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 from .middleware import get_request
 from .models import Revision
 from .utils import obj_diff

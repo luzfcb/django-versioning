@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 from django.conf import settings
 from django.contrib import admin
 
@@ -41,7 +42,7 @@ class RevisionAdmin(admin.ModelAdmin):
 
         # Is revision has an empty diff?
         diffs = diff_split_by_fields(obj.delta)
-        if not u"".join(diffs.values()).strip():
+        if not "".join(list(diffs.values())).strip():
             return True
 
         return False

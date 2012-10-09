@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 # -*- mode: python; coding: utf-8; -*-
 
 try:

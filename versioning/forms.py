@@ -1,3 +1,4 @@
+from __future__ import absolute_import, unicode_literals
 from django import forms
 from django.utils.safestring import mark_safe
 from django.utils.translation import ugettext_lazy as _
@@ -8,7 +9,7 @@ from .models import Revision
 class ReadOnlyInput(forms.Widget):
     """Don't allows to edit Revision.delta"""
     def render(self, name, value, attrs=None):
-        return mark_safe(u"<div>{0}</div>".format(value))
+        return mark_safe("<div>{0}</div>".format(value))
 
 
 class RevisionReadonlyForm(forms.ModelForm):
