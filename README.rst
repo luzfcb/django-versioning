@@ -3,7 +3,9 @@ Django-Versioning
 ==================
 
 Django-versioning allows you to version the data stored in django models, and stores only diff, not content copy.
+
 Supports all field types excepts ManyToMany (currently).
+
 Forked from https://github.com/brosner/django-versioning
 
 Usage
