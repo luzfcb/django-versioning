@@ -12,7 +12,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from . import _registry
 from .managers import RevisionManager
-from .utils import dmp, diff_split_by_fields
+from .utils import dmp, diff_split_by_fields, get_field_data
 
 try:
     str = unicode  # Python 2.* compatible
@@ -103,23 +103,34 @@ class Revision(models.Model):
         for changeset in next_changes:
             diffs = diff_split_by_fields(changeset.delta)
             for key, diff in diffs.items():
-                model2, field = key.split('.')
-                if model2 != model.__name__ or field not in fields:
+                model_name, field_name = key.split('.')
+                if model_name != model.__name__ or field_name not in fields:
                     continue
-                content = force_unicode(getattr(content_object, field))
+                content = get_field_data(content_object, field_name)
                 patch = dmp.patch_fromText(diff)
                 content = dmp.patch_apply(patch, content)[0]
-                fobj = content_object._meta.get_field(field)
-                if content == 'None' and fobj.null:
-                    content = None
-                if fobj.get_internal_type() in ('BooleanField',
-                                                'NullBooleanField', ):
+                fobj = content_object._meta.get_field(field_name)
+                if content == 'None':
+                    if fobj.null:
+                        content = None
+                    else:
+                        continue
+                elif fobj.get_internal_type() in ('BooleanField',
+                                                  'NullBooleanField', ):
                     if content == 'True':
                         content = True
                     elif content == 'False':
                         content = False
-                content = fobj.to_python(content)
-                setattr(content_object, field, content)
+                elif fobj.get_internal_type() == 'ForeignKey':
+                    rel_model = fobj.rel.to
+                    try:
+                        #content = rel_model._meta.pk.to_python(content)
+                        content = rel_model.objects.get(pk=content)
+                    except rel_model.DoesNotExist:
+                        continue
+                else:
+                    content = fobj.to_python(content)
+                setattr(content_object, field_name, content)
             changeset.reverted = True
             changeset.save()
 
@@ -154,19 +165,26 @@ class Revision(models.Model):
                 # after the change
                 next_rev = copy.copy(old)
             for key, diff in diffs.items():
-                model2, field = key.split('.')
-                if model2 != model.__name__ or field not in fields:
+                model_name, field_name = key.split('.')
+                if model_name != model.__name__ or field_name not in fields:
                     continue
                 patches = dmp.patch_fromText(diff)
-                setattr(old, field,
-                        dmp.patch_apply(patches,
-                                        force_unicode(getattr(old, field)))[0])
+                setattr(
+                    old,
+                    field_name,
+                    dmp.patch_apply(
+                        patches,
+                        get_field_data(old, field_name)
+                    )[0]
+                )
 
         result = []
-        for field in fields:
-            result.append("<b>{0}</b>".format(field))
-            diffs = dmp.diff_main(force_unicode(getattr(old, field)),
-                                  force_unicode(getattr(next_rev, field)))
+        for field_name in fields:
+            result.append("<b>{0}</b>".format(field_name))
+            diffs = dmp.diff_main(
+                get_field_data(old, field_name),
+                get_field_data(next_rev, field_name)
+            )
             result.append(dmp.diff_prettyHtml(diffs))
         return "<br />\n".join(result)
 

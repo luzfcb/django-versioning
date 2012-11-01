@@ -52,8 +52,8 @@ class RevisionListView(ListView):
 
     def get_queryset(self):
         """Returns queryset for current request. Also, check permissions."""
-        content_type=self.kwargs.get('content_type', None)
-        object_id=self.kwargs.get('object_id', None)
+        content_type = self.kwargs.get('content_type', None)
+        object_id = self.kwargs.get('object_id', None)
         content_type = get_object_or_404(ContentType, pk=content_type)
         try:
             content_obj = content_type.get_object_for_this_type(pk=object_id)

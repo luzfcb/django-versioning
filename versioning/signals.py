@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 from .middleware import get_request
 from .models import Revision
-from .utils import obj_diff
+from .utils import obj_diff, obj_is_changed
 
 
 def pre_save(instance, **kwargs):
@@ -17,6 +17,11 @@ def pre_save(instance, **kwargs):
         original = model._default_manager.get(pk=instance.pk)
     except model.DoesNotExist:
         original = model()
+
+    if not obj_is_changed(instance, original):
+        instance.revision_info = {}
+        return
+
     info['delta'] = obj_diff(instance, original)
     request = get_request()
     if request:

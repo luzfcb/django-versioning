@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 import sys
 from difflib import SequenceMatcher
+from django.db import models
 from django.utils.encoding import force_unicode
 
 #from django.utils.encoding import smart_unicode
@@ -27,14 +28,22 @@ def diff(txt1, txt2):
     return dmp.patch_toText(patch)
 
 
+def get_field_data(obj, field):
+    """Returns field's data"""
+    data = getattr(obj, field)
+    if isinstance(data, models.Model):
+        data = getattr(data, 'pk', None)
+    return force_unicode(data)
+
+
 def obj_diff(obj1, obj2):
     """Create a 'diff' from obj1 to obj2."""
     model = obj1.__class__
     fields = _registry[model]
     lines = []
     for field in fields:
-        original_data = force_unicode(getattr(obj2, field))
-        new_data = force_unicode(getattr(obj1, field))
+        original_data = get_field_data(obj2, field)
+        new_data = get_field_data(obj1, field)
         #data_diff = unified_diff(original_data.splitlines(),
         #                         new_data.splitlines(), context=3)
         data_diff = diff(new_data, original_data)
@@ -45,6 +54,18 @@ def obj_diff(obj1, obj2):
         lines.append(data_diff.strip())
 
     return "\n".join(lines)
+
+
+def obj_is_changed(obj1, obj2):
+    """Returns True, if watched attributes of obj1 deffer from obj2."""
+    model = obj1.__class__
+    fields = _registry[model]
+    for field in fields:
+        original_data = get_field_data(obj2, field)
+        new_data = get_field_data(obj1, field)
+        if original_data != new_data:
+            return True
+    return False
 
 
 def diff_split_by_fields(txt):
