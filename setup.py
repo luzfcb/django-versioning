@@ -18,7 +18,7 @@ setup(
     author = "Ivan Zakrevsky",
     author_email = "ivzak@yandex.ru",
     description = "Django-versioning allows you to version the data stored in django models, and stores only diff, not content copy.",
-    long_description=open(os.path.join(os.path.dirname(__file__), 'README')).read(),
+    long_description=open(os.path.join(os.path.dirname(__file__), 'README.rst')).read(),
     license = "BSD License",
     keywords = "versioning revision model django changeset reversion",
     classifiers = [
