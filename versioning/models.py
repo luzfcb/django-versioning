@@ -14,6 +14,11 @@ from . import _registry
 from .managers import RevisionManager
 from .utils import dmp, diff_split_by_fields
 
+try:
+    str = unicode  # Python 2.* compatible
+except NameError:
+    pass
+
 
 class Revision(models.Model):
     """
@@ -48,9 +53,9 @@ class Revision(models.Model):
         ordering = ('-id',)
         unique_together = (("object_id", "content_type", "revision"),)
 
-    def __unicode__(self):
+    def __str__(self):
         return "r{0} {1} {2}".format(self.revision, self.sha1,
-                                      self.content_object)
+                                     self.content_object)
 
     def save(self, *a, **kw):
         """ Saves the article with a new revision.
@@ -164,3 +169,13 @@ class Revision(models.Model):
                                   force_unicode(getattr(next_rev, field)))
             result.append(dmp.diff_prettyHtml(diffs))
         return "<br />\n".join(result)
+
+# Python 2.* compatible
+try:
+    unicode
+except NameError:
+    pass
+else:
+    for cls in (Revision, ):
+        cls.__unicode__ = cls.__str__
+        cls.__str__ = lambda self: self.__unicode__().encode('utf-8')
