@@ -41,7 +41,7 @@ class RevisionReapplyView(UpdateView):
         """Returns content_object url"""
         return self.object.content_object.get_absolute_url()
 
-    @method_decorator(login_required)
+    # @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super(RevisionReapplyView, self).dispatch(request, *args, **kwargs)
 
@@ -72,6 +72,6 @@ class RevisionListView(ListView):
             raise PermissionDenied
         return qs
 
-    @method_decorator(login_required)
+    # @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):
         return super(RevisionListView, self).dispatch(request, *args, **kwargs)
