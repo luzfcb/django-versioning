@@ -54,3 +54,9 @@ wiki/templates/wiki/article_detail.html::
     ...
     <a href="{% url versioning_revision_list content_type=contenttype_id object_id=article.pk %}">View the list of revisions.</a>
     ...
+
+If you have already existent content, to create a first revision, simple run::
+
+    ./manage.py versioning_setup wiki.Article -f
+
+You can also view revisions in admin, by clicking "History" button on change object page.
