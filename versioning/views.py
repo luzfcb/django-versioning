@@ -56,21 +56,30 @@ class RevisionListView(ListView):
         object_id = self.kwargs.get('object_id', None)
         content_type = get_object_or_404(ContentType, pk=content_type)
         try:
-            content_obj = content_type.get_object_for_this_type(pk=object_id)
+            content_object = content_type.get_object_for_this_type(pk=object_id)
+            self.content_object = content_object
         except content_type.model_class().DoesNotExist:
             raise Http404
         qs = self.queryset.filter(
             content_type=content_type,
-            object_id=content_obj.pk
+            object_id=content_object.pk
         )
         perm = '{app}.{perm}_{mod}'.format(
-            app=content_obj._meta.app_label,
+            app=content_object._meta.app_label,
             perm='browse_revision',
-            mod=content_obj._meta.module_name
+            mod=content_object._meta.module_name
         )
-        if not self.request.user.has_perm(perm, content_obj):
+        if not self.request.user.has_perm(perm, content_object):
             raise PermissionDenied
         return qs
+
+    def get_context_data(self, **kwargs):
+        """Get the context for this view."""
+        context = super(RevisionListView, self).get_context_data(**kwargs)
+        context.update({
+            'content_object': self.content_object,
+        })
+        return context
 
     # @method_decorator(login_required)
     def dispatch(self, request, *args, **kwargs):

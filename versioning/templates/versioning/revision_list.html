@@ -2,7 +2,8 @@
 {% load i18n %}
 
 {% block body %}
-			    <table id="change-history">
+                <h2>{% blocktrans with url=content_object.get_absolute_url %}Revisions for <a href="{{ url }}">{{ content_object }}</a>{% endblocktrans %}</h2>
+			    <table id="versioning-revision-list">
 			        <thead>
 				        <tr>
 				            <th scope="col">{% trans 'Revision' %}</th>
