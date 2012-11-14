@@ -20,10 +20,11 @@ class RevisionReapplyView(UpdateView):
     def get_object(self, queryset=None):
         """Returns object for current request. Also checks permissions."""
         obj = super(RevisionReapplyView, self).get_object(queryset)
+        content_object = obj.content_object
         perm = '{app}.{perm}_{mod}'.format(
-            app=obj._meta.app_label,
+            app=content_object._meta.app_label,
             perm='reapply_revision',
-            mod=obj._meta.module_name
+            mod=content_object._meta.module_name
         )
         if not self.request.user.has_perm(perm, obj.content_object):
             raise PermissionDenied
