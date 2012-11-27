@@ -9,23 +9,39 @@ class AlreadyRegistered(Exception):
 def register(model, fields=None):
     """
     """
+    from django.conf import settings
     from django.db import models
     from django.db.models import signals as model_signals
     from versioning.signals import pre_save, post_save
+    if 'modeltranslation' in settings.INSTALLED_APPS:
+        from modeltranslation.translator import translator, NotRegistered
+    else:
+        translator = None
 
     opts = model._meta
 
     if fields is None:
         raise TypeError("You must give at least one field.")
     else:
-        for field in fields:
+        fields = list(fields)
+        for field in fields[:]:
             f = opts.get_field(field)
-            if not isinstance(f, models.TextField) and False:
+            if isinstance(f, models.ManyToManyField):
                 raise TypeError("""
-                    versioning cannot handle anything other
-                    than a TextField. {0} is of type {1}
+                    versioning currently cannot handle ManyToManyField.
+                    {0} is of type {1}
                     """.format(field, type(f))
                 )
+            if translator:
+                try:
+                    trans_opts = translator.get_options_for_model(model)
+                    if field in trans_opts.fields:
+                        fields[
+                            fields.index(field) + 1:
+                            fields.index(field) + 1
+                        ] = trans_opts.localized_fieldnames[field]
+                except NotRegistered:
+                    pass
 
     if model in _registry:
         raise AlreadyRegistered
