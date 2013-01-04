@@ -4,11 +4,11 @@ import hashlib
 from datetime import datetime
 
 from django.db import models, IntegrityError
-from django.contrib.auth.models import User
 from django.contrib.contenttypes import generic
 from django.contrib.contenttypes.models import ContentType
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
+from django.conf import settings
 
 from . import _registry
 from .managers import RevisionManager
@@ -19,6 +19,7 @@ try:
 except NameError:
     pass
 
+UserModel = getattr(settings, 'AUTH_USER_MODEL', 'auth.User') 
 
 class Revision(models.Model):
     """
@@ -39,7 +40,7 @@ class Revision(models.Model):
     comment = models.CharField(_("Editor comment"), max_length=255,
                                blank=True)
 
-    editor = models.ForeignKey(User, verbose_name=_('Editor'),
+    editor = models.ForeignKey(UserModel, verbose_name=_('Editor'),
                                blank=True, null=True,
                                on_delete=models.SET_NULL)
     editor_ip = models.IPAddressField(_("IP Address of the Editor"),
