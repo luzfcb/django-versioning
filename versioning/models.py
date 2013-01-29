@@ -2,9 +2,9 @@ from __future__ import absolute_import, unicode_literals
 import copy
 import hashlib
 try:
-    from django.utils.timezone import now
+    from django.utils import timezone as datetime
 except ImportError:
-    from datetime.datetime import now
+    from datetime import datetime
 
 from django.db import models, IntegrityError
 from django.contrib.contenttypes import generic
@@ -38,7 +38,7 @@ class Revision(models.Model):
     sha1 = models.CharField(max_length=40, db_index=True)
     delta = models.TextField()
 
-    created_at = models.DateTimeField(_("Created at"), default=now,
+    created_at = models.DateTimeField(_("Created at"), default=datetime.now,
                                       db_index=True)
     comment = models.CharField(_("Editor comment"), max_length=255,
                                blank=True)
