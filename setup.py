@@ -1,19 +1,18 @@
 #!/usr/bin/env python
 #
-# Copyright (c) 2011 Ivan Zakrevsky
+# Copyright (c) 2011-2013 Ivan Zakrevsky
 # Licensed under the terms of the BSD License (see LICENSE.txt)
 import os.path
 from setuptools import setup, find_packages
-import metadata
 
-app_name = metadata.name
-version = metadata.version
+app_name = os.path.basename(os.path.dirname(os.path.abspath(__file__)))
 
 setup(
     name = app_name,
-    version = version,
+    version = '0.7.1',
 
     packages = find_packages(),
+    include_package_data=True,
 
     author = "Ivan Zakrevsky",
     author_email = "ivzak@yandex.ru",
@@ -32,5 +31,5 @@ setup(
         'Topic :: Software Development :: Libraries :: Application Frameworks',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
-    url = "https://bitbucket.org/evotech/%s".format(app_name),
+    url = "https://bitbucket.org/evotech/{0}".format(app_name),
 )

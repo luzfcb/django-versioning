@@ -7,3 +7,6 @@ VCSREV
 django_versioning.egg-info
 .*project*
 .settings
+dist/
+sqlbuilder.egg-info/
+build/
