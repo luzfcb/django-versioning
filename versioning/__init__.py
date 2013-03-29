@@ -39,7 +39,7 @@ def register(model, fields=None):
                         fields[
                             fields.index(field) + 1:
                             fields.index(field) + 1
-                        ] = trans_opts.localized_fieldnames[field]
+                        ] = [i.name for i in trans_opts.fields[field]]
                 except NotRegistered:
                     pass
 
