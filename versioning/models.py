@@ -15,7 +15,7 @@ from django.conf import settings
 
 from . import _registry
 from .managers import RevisionManager
-from .utils import dmp, diff_split_by_fields, get_field_data
+from .utils import dmp, diff_split_by_fields, get_field_data, set_field_data
 
 try:
     str = unicode  # Python 2.* compatible
@@ -114,28 +114,9 @@ class Revision(models.Model):
                 content = get_field_data(content_object, field_name)
                 patch = dmp.patch_fromText(diff)
                 content = dmp.patch_apply(patch, content)[0]
-                fobj = content_object._meta.get_field(field_name)
-                if content == 'None':
-                    if fobj.null:
-                        content = None
-                    else:
-                        continue
-                elif fobj.get_internal_type() in ('BooleanField',
-                                                  'NullBooleanField', ):
-                    if content == 'True':
-                        content = True
-                    elif content == 'False':
-                        content = False
-                elif fobj.get_internal_type() == 'ForeignKey':
-                    rel_model = fobj.rel.to
-                    try:
-                        #content = rel_model._meta.pk.to_python(content)
-                        content = rel_model.objects.get(pk=content)
-                    except rel_model.DoesNotExist:
-                        continue
-                else:
-                    content = fobj.to_python(content)
-                setattr(content_object, field_name, content)
+                
+                set_field_data(content_object, field_name, content)
+                
             changeset.reverted = True
             changeset.save()
 
@@ -174,9 +155,10 @@ class Revision(models.Model):
                 if model_name != model.__name__ or field_name not in fields:
                     continue
                 patches = dmp.patch_fromText(diff)
-                setattr(
-                    old,
-                    field_name,
+                
+                set_field_data(
+                    old, 
+                    field_name, 
                     dmp.patch_apply(
                         patches,
                         get_field_data(old, field_name)
