@@ -68,7 +68,7 @@ class VersioningForAdminTest(TestCase):
         obj_2 = TestModel.objects.get(pk=obj_1.pk)
         obj_2.attr_text = "строка первая\nстрока измененная вторая\nстрока третья"
         obj_2.attr_bool = True
-        obj_3.attr_fk = obj_fk_1
+        obj_2.attr_fk = obj_fk_1
         obj_2.revision_info = {
             'editor': self.admin,
             'comment': 'comment 1',
