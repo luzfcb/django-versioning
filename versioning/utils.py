@@ -3,6 +3,7 @@ import sys
 from difflib import SequenceMatcher
 from django.db import models
 from django.utils.encoding import force_unicode
+from django.core.exceptions import ObjectDoesNotExist
 
 #from django.utils.encoding import smart_unicode
 # Google Diff Match Patch library
@@ -27,12 +28,36 @@ def diff(txt1, txt2):
     patch = dmp.patch_make(txt1, txt2)
     return dmp.patch_toText(patch)
 
-
+def set_field_data(obj, field, data):
+    field_class = obj._meta.get_field(field)
+    if (field_class.null) and (data == 'None'):
+        data = None
+    elif isinstance(field_class, models.BooleanField) or isinstance(field_class, models.NullBooleanField):
+        if data == 'True':
+            data = True
+        elif data == 'False':
+            data = False              
+    elif isinstance(field_class, models.ForeignKey):
+        if data == 'None':
+            data = field_class.rel.to()
+        else:
+            data = field_class.rel.to._default_manager.get(pk=data)
+    else:
+        data = field_class.to_python(data)
+        
+    setattr(obj, field, data)
+    
 def get_field_data(obj, field):
     """Returns field's data"""
-    data = getattr(obj, field)
-    if isinstance(data, models.Model):
-        data = getattr(data, 'pk', None)
+    field_class = obj._meta.get_field(field)
+    if isinstance(field_class, models.ForeignKey):
+        try:
+            data = getattr(obj, field)
+            data = getattr(data, 'pk', None)
+        except ObjectDoesNotExist:
+            data = None
+    else:
+        data = getattr(obj, field)
     return force_unicode(data)
 
 
