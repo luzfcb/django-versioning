@@ -28,6 +28,7 @@ def diff(txt1, txt2):
     patch = dmp.patch_make(txt1, txt2)
     return dmp.patch_toText(patch)
 
+
 def set_field_data(obj, field, data):
     field_class = obj._meta.get_field(field)
     if (field_class.null) and (data == 'None'):
@@ -44,9 +45,10 @@ def set_field_data(obj, field, data):
             data = field_class.rel.to._default_manager.get(pk=data)
     else:
         data = field_class.to_python(data)
-        
+
     setattr(obj, field, data)
-    
+
+
 def get_field_data(obj, field):
     """Returns field's data"""
     field_class = obj._meta.get_field(field)

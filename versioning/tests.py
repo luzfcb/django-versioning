@@ -52,7 +52,7 @@ class VersioningForAdminTest(TestCase):
         obj_1 = TestModel(
             attr_text="строка первая\nстрока вторая\nстрока третья",
             attr_fk=None,
-            attr_fk_notnull=obj_fk_2,
+            attr_fk_notnull=obj_fk_1,
             attr_int=1
         )
         obj_1.revision_info = {
@@ -69,6 +69,7 @@ class VersioningForAdminTest(TestCase):
         obj_2.attr_text = "строка первая\nстрока измененная вторая\nстрока третья"
         obj_2.attr_bool = True
         obj_2.attr_fk = obj_fk_1
+        obj_2.attr_fk_notnull = obj_fk_1
         obj_2.revision_info = {
             'editor': self.admin,
             'comment': 'comment 1',
@@ -81,7 +82,7 @@ class VersioningForAdminTest(TestCase):
         obj_3.attr_bool = False
         obj_3.attr_int = 3
         obj_3.attr_fk = obj_fk_2
-        obj_3.attr_fk_notnull = obj_fk_1
+        obj_3.attr_fk_notnull = obj_fk_2
         obj_3.revision_info = {
             'editor': self.admin,
             'comment': 'comment 1',
@@ -91,14 +92,13 @@ class VersioningForAdminTest(TestCase):
 
         rev_1 = Revision.objects.get_for_object(obj_1).order_by('pk')[0]
         self.assertEqual(rev_1.revision, 1)
-        
-        rev_1.display_diff()
-        
-        rev_1.reapply()
 
+        rev_1.display_diff()
+        rev_1.reapply()
 
         obj_4 = TestModel.objects.get(pk=obj_1.pk)
         self.assertEqual(obj_4.attr_text, obj_1.attr_text)
         self.assertEqual(obj_4.attr_bool, obj_1.attr_bool)
         self.assertEqual(obj_4.attr_fk, obj_1.attr_fk)
+        self.assertEqual(obj_4.attr_fk_notnull, obj_1.attr_fk_notnull)
         self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 4)
