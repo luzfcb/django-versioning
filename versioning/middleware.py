@@ -15,6 +15,6 @@ def get_request():
 
 
 class VersioningMiddleware(object):
-    """Middleware that saves request in thread local starage"""
+    """Middleware that saves request in thread local storage"""
     def process_request(self, request):
         _thread_locals.request = request
