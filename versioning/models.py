@@ -172,6 +172,7 @@ class Revision(models.Model):
                 get_field_data(old, field_name),
                 get_field_data(next_rev, field_name)
             )
+            dmp.diff_cleanupSemantic(diffs)
             result.append(dmp.diff_prettyHtml(diffs))
         return "<br />\n".join(result)
 
