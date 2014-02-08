@@ -36,16 +36,15 @@ dmp = diff_match_patch()
 
 
 def encode(val):
-    return PICKLED_MARKER + str(base64.standard_b64encode(
+    return PICKLED_MARKER + base64.standard_b64encode(
         pickle.dumps(val, protocol=pickle.HIGHEST_PROTOCOL)
-    ))
+    ).decode('ascii')
 
 
 def decode(val):
     if val.startswith('pickled:'):
         try:
-            # TODO: Make a safe decode for Python3
-            return pickle.loads(base64.standard_b64decode(val[len(PICKLED_MARKER):]))
+            return pickle.loads(base64.standard_b64decode(val[len(PICKLED_MARKER):].encode('ascii')))
         except Exception:
             pass
     return val
