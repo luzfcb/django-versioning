@@ -1,5 +1,12 @@
 from __future__ import absolute_import, unicode_literals
 import sys
+import base64
+
+try:
+    import cPickle as pickle
+except ImportError:
+    import pickle
+
 from difflib import SequenceMatcher
 from django.db import models
 from django.utils.encoding import force_unicode
@@ -15,7 +22,33 @@ else:
 
 from versioning import _registry
 
+try:
+    str = unicode  # Python 2.* compatible
+    string_types = (basestring,)
+    integer_types = (int, long)
+except NameError:
+    string_types = (str,)
+    integer_types = (int,)
+
+PICKLED_MARKER = 'pickled:'
+
 dmp = diff_match_patch()
+
+
+def encode(val):
+    return PICKLED_MARKER + str(base64.standard_b64encode(
+        pickle.dumps(val, protocol=pickle.HIGHEST_PROTOCOL)
+    ))
+
+
+def decode(val):
+    if val.startswith('pickled:'):
+        try:
+            # TODO: Make a safe decode for Python3
+            return pickle.loads(base64.standard_b64decode(val[len(PICKLED_MARKER):]))
+        except Exception:
+            pass
+    return val
 
 
 def revisions_for_object(instance):
@@ -31,19 +64,20 @@ def diff(txt1, txt2):
 
 def set_field_data(obj, field, data):
     field_class = obj._meta.get_field(field)
-    if (field_class.null) and (data == 'None'):
+    if field_class.null and data == 'None':
         data = None
     elif isinstance(field_class, models.BooleanField) or isinstance(field_class, models.NullBooleanField):
         if data == 'True':
             data = True
         elif data == 'False':
-            data = False              
+            data = False
     elif isinstance(field_class, models.ForeignKey):
         if data == 'None':
             data = field_class.rel.to()
         else:
             data = field_class.rel.to._default_manager.get(pk=data)
     else:
+        # data = decode(data)
         data = field_class.to_python(data)
 
     setattr(obj, field, data)
@@ -60,6 +94,7 @@ def get_field_data(obj, field):
             data = None
     else:
         data = getattr(obj, field)
+    # return force_unicode(data) if isinstance(data, string_types) else encode(data)
     return force_unicode(data)
 
 
