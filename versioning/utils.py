@@ -31,22 +31,27 @@ except NameError:
     integer_types = (int,)
 
 PICKLED_MARKER = 'pickled:'
+STR_MARKER = 'str:'
 
 dmp = diff_match_patch()
 
 
 def encode(val):
-    return PICKLED_MARKER + base64.standard_b64encode(
-        pickle.dumps(val, protocol=pickle.HIGHEST_PROTOCOL)
-    ).decode('ascii')
+    if not isinstance(val, string_types):
+        return PICKLED_MARKER + base64.standard_b64encode(
+            pickle.dumps(val, protocol=pickle.HIGHEST_PROTOCOL)
+        ).decode('ascii')
+    return STR_MARKER + force_unicode(val)  # prevent to user to falsify PICKLED_MARKER
 
 
 def decode(val):
-    if val.startswith('pickled:'):
+    if val.startswith(PICKLED_MARKER):
         try:
             return pickle.loads(base64.standard_b64decode(val[len(PICKLED_MARKER):].encode('ascii')))
         except Exception:
             pass
+    elif val.startswith(STR_MARKER):
+        return val[len(STR_MARKER):]
     return val
 
 
@@ -63,6 +68,7 @@ def diff(txt1, txt2):
 
 def set_field_data(obj, field, data):
     field_class = obj._meta.get_field(field)
+    # data = decode(data)
     if field_class.null and data == 'None':
         data = None
     elif isinstance(field_class, models.BooleanField) or isinstance(field_class, models.NullBooleanField):
@@ -76,7 +82,6 @@ def set_field_data(obj, field, data):
         else:
             data = field_class.rel.to._default_manager.get(pk=data)
     else:
-        # data = decode(data)
         data = field_class.to_python(data)
 
     setattr(obj, field, data)
@@ -93,7 +98,7 @@ def get_field_data(obj, field):
             data = None
     else:
         data = getattr(obj, field)
-    # return force_unicode(data) if isinstance(data, string_types) else encode(data)
+    # return encode(data)
     return force_unicode(data)
 
 
