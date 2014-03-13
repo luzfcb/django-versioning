@@ -45,9 +45,6 @@ def main():
     )
     admin.autodiscover()
 
-    from cache_tagging.django_cache_tagging import autodiscover
-    autodiscover()
-
     # Run the test suite, including the extra validation tests.
     from django.test.utils import get_runner
     TestRunner = get_runner(settings)
