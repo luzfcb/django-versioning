@@ -67,39 +67,19 @@ def diff(txt1, txt2):
 
 
 def set_field_data(obj, field, data):
-    field_class = obj._meta.get_field(field)
+    field_inst = obj._meta.get_field(field)
     # data = decode(data)
-    if field_class.null and data == 'None':
+    if field_inst.null and data == 'None':
         data = None
-    elif isinstance(field_class, models.BooleanField) or isinstance(field_class, models.NullBooleanField):
-        if data == 'True':
-            data = True
-        elif data == 'False':
-            data = False
-    elif isinstance(field_class, models.ForeignKey):
-        if data == 'None':
-            data = field_class.rel.to()
-        else:
-            data = field_class.rel.to._default_manager.get(pk=data)
     else:
-        data = field_class.to_python(data)
-
-    setattr(obj, field, data)
+        data = field_inst.to_python(data)
+    setattr(obj, field_inst.attname, data)
 
 
 def get_field_data(obj, field):
     """Returns field's data"""
-    field_class = obj._meta.get_field(field)
-    if isinstance(field_class, models.ForeignKey):
-        try:
-            data = getattr(obj, field)
-            data = getattr(data, 'pk', None)
-        except ObjectDoesNotExist:
-            data = None
-    else:
-        data = getattr(obj, field)
-    # return encode(data)
-    return force_unicode(data)
+    # return encode(obj._meta.get_field(field)._get_val_from_obj(obj))
+    return obj._meta.get_field(field).value_to_string(obj)
 
 
 def obj_diff(obj1, obj2):
