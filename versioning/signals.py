@@ -14,15 +14,15 @@ def pre_save(instance, **kwargs):
     info = instance.revision_info
 
     try:
-        original = model._default_manager.get(pk=instance.pk)
+        prev = model._default_manager.get(pk=instance.pk)
     except model.DoesNotExist:
-        original = model()
+        prev = model()
 
-    if not obj_is_changed(instance, original):
+    if not obj_is_changed(prev, instance):
         instance.revision_info = {}
         return
 
-    info['delta'] = obj_diff(instance, original)
+    info['delta'] = obj_diff(prev, instance)
     request = get_request()
     if request:
         if not info.get('editor'):

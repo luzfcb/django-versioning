@@ -8,9 +8,7 @@ except ImportError:
     import pickle
 
 from difflib import SequenceMatcher
-from django.db import models
 from django.utils.encoding import force_unicode
-from django.core.exceptions import ObjectDoesNotExist
 
 #from django.utils.encoding import smart_unicode
 # Google Diff Match Patch library
@@ -60,9 +58,9 @@ def revisions_for_object(instance):
     return Revision.objects.get_for_object(instance)
 
 
-def diff(txt1, txt2):
-    """Create a 'diff' from txt1 to txt2."""
-    patch = dmp.patch_make(txt1, txt2)
+def diff(txt_prev, txt_next):
+    """Create a 'diff' from txt_prev to txt_new."""
+    patch = dmp.patch_make(txt_next, txt_prev)
     return dmp.patch_toText(patch)
 
 
@@ -87,36 +85,64 @@ def get_field_str(obj, field):
     return obj._meta.get_field(field).value_to_string(obj)
 
 
-def obj_diff(obj1, obj2):
-    """Create a 'diff' from obj1 to obj2."""
-    model = obj1.__class__
+def obj_diff(obj_prev, obj_next):
+    """Create a 'diff' from obj_prev to obj_new."""
+    model = obj_next.__class__
     fields = _registry[model]
     lines = []
     for field in fields:
-        original_data = get_field_data(obj2, field)
-        new_data = get_field_data(obj1, field)
-        #data_diff = unified_diff(original_data.splitlines(),
-        #                         new_data.splitlines(), context=3)
-        data_diff = diff(new_data, original_data)
+        data_prev = get_field_data(obj_prev, field)
+        data_next = get_field_data(obj_next, field)
+        # data_diff = unified_diff(data_prev.splitlines(), data_next.splitlines(), context=3)
+        data_diff = diff(data_prev, data_next)
         lines.extend(["--- {0}.{1}".format(model.__name__, field),
                      "+++ {0}.{1}".format(model.__name__, field)])
-        #for line in data_diff:
-        #lines.append(force_unicode(data_diff.strip()))
         lines.append(data_diff.strip())
 
     return "\n".join(lines)
 
 
-def obj_is_changed(obj1, obj2):
+def apply_diff(obj, delta):
+    model = obj.__class__
+    fields = _registry[model]
+    diffs = diff_split_by_fields(delta)
+    for key, diff in diffs.items():
+        model_name, field_name = key.split('.')
+        if model_name != model.__name__ or field_name not in fields:
+            continue
+        content = get_field_data(obj, field_name)
+        patch = dmp.patch_fromText(diff)
+        content = dmp.patch_apply(patch, content)[0]
+        set_field_data(obj, field_name, content)
+
+
+def obj_is_changed(obj_prev, obj_next):
     """Returns True, if watched attributes of obj1 deffer from obj2."""
-    model = obj1.__class__
+    model = obj_next.__class__
     fields = _registry[model]
     for field in fields:
-        original_data = get_field_data(obj2, field)
-        new_data = get_field_data(obj1, field)
+        original_data = get_field_data(obj_next, field)
+        new_data = get_field_data(obj_prev, field)
         if original_data != new_data:
             return True
     return False
+
+
+def display_diff(obj_prev, obj_next):
+    """Returns a HTML representation of the diff."""
+    model = obj_next.__class__
+    fields = _registry[model]
+
+    result = []
+    for field_name in fields:
+        result.append("<b>{0}</b>".format(field_name))
+        diffs = dmp.diff_main(
+            get_field_str(obj_prev, field_name),
+            get_field_str(obj_next, field_name)
+        )
+        dmp.diff_cleanupSemantic(diffs)
+        result.append(dmp.diff_prettyHtml(diffs))
+    return "<br />\n".join(result)
 
 
 def diff_split_by_fields(txt):

@@ -38,7 +38,7 @@ class Command(BaseCommand):
                         revisions.delete()
                 Revision.objects.create(**{
                     'comment': 'Initial revision',
-                    'delta': obj_diff(obj, obj_empty),
+                    'delta': obj_diff(obj_empty, obj),
                     'content_object': obj,
                 })
                 self.stdout.write(

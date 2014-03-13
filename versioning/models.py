@@ -13,16 +13,16 @@ from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
 from django.conf import settings
 
-from . import _registry
 from .managers import RevisionManager
-from .utils import dmp, diff_split_by_fields, get_field_data, set_field_data, get_field_str
+from .utils import apply_diff, display_diff
 
 try:
     str = unicode  # Python 2.* compatible
 except NameError:
     pass
 
-UserModel = getattr(settings, 'AUTH_USER_MODEL', 'auth.User') 
+UserModel = getattr(settings, 'AUTH_USER_MODEL', 'auth.User')
+
 
 class Revision(models.Model):
     """
@@ -90,91 +90,54 @@ class Revision(models.Model):
         """Returns True if editor is not authenticated."""
         return self.editor is None
 
+    def get_content_object_version(self, prev=False):
+        """Returns content_object for this revision"""
+        obj = copy.copy(self.content_object)
+
+        next_changes = Revision.objects.get_for_object(
+            obj
+        ).filter(**{
+            'revision__gte' if prev else 'revision__gt': self.revision
+        }).order_by('-revision')
+
+        for changeset in next_changes:
+            apply_diff(obj, changeset.delta)
+
+        return obj
+
+    @property
+    def content_object_version(self):
+        return self.get_content_object_version()
+
     def reapply(self, editor_ip=None, editor=None):
         """
         Returns the Content object to this revision.
         """
-        # Exclude reverted revisions?
-        next_changes = Revision.objects.get_for_object(
-            self.content_object
-        ).filter(
-            revision__gt=self.revision
-        ).order_by('-revision')
-
-        content_object = self.content_object
-
-        model = self.content_object.__class__
-        fields = _registry[model]
-        for changeset in next_changes:
-            diffs = diff_split_by_fields(changeset.delta)
-            for key, diff in diffs.items():
-                model_name, field_name = key.split('.')
-                if model_name != model.__name__ or field_name not in fields:
-                    continue
-                content = get_field_data(content_object, field_name)
-                patch = dmp.patch_fromText(diff)
-                content = dmp.patch_apply(patch, content)[0]
-                
-                set_field_data(content_object, field_name, content)
-                
-            changeset.reverted = True
-            changeset.save()
-
-        content_object.revision_info = {
+        obj = self.content_object_version
+        obj.revision_info = {
             'comment': "Reverted to revision #{0}".format(self.revision),
             'editor_ip': editor_ip,
             'editor': editor
         }
-        content_object.save()
-        #self.save()
+
+        Revision.objects.get_for_object(
+            obj
+        ).filter(
+            revision__gt=self.revision
+        ).update(reverted=True)
+
+        obj.save()
 
     def display_diff(self):
         """Returns a HTML representation of the diff."""
-        # well, it *will* be the old content
-        old = copy.copy(self.content_object)
 
-        # newer non-reverted revisions of this content_object,
-        # starting from this
         if not self.delta:
             return ""
-        newer_changesets = Revision.objects.get_for_object(
-            self.content_object
-        ).filter(revision__gte=self.revision)
 
-        model = self.content_object.__class__
-        fields = _registry[model]
-        # apply all patches to get the content of this revision
-        for i, changeset in enumerate(newer_changesets):
-            diffs = diff_split_by_fields(changeset.delta)
-            if len(newer_changesets) == i + 1:
-                # we need to compare with the next revision
-                # after the change
-                next_rev = copy.copy(old)
-            for key, diff in diffs.items():
-                model_name, field_name = key.split('.')
-                if model_name != model.__name__ or field_name not in fields:
-                    continue
-                patches = dmp.patch_fromText(diff)
-                
-                set_field_data(
-                    old, 
-                    field_name, 
-                    dmp.patch_apply(
-                        patches,
-                        get_field_data(old, field_name)
-                    )[0]
-                )
+        obj_current = self.content_object_version
+        obj_prev = self.get_content_object_version(prev=True)
 
-        result = []
-        for field_name in fields:
-            result.append("<b>{0}</b>".format(field_name))
-            diffs = dmp.diff_main(
-                get_field_str(old, field_name),
-                get_field_str(next_rev, field_name)
-            )
-            dmp.diff_cleanupSemantic(diffs)
-            result.append(dmp.diff_prettyHtml(diffs))
-        return "<br />\n".join(result)
+        return display_diff(obj_prev, obj_current)
 
 # Python 2.* compatible
 try:

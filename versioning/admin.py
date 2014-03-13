@@ -12,7 +12,7 @@ class RevisionAdmin(admin.ModelAdmin):
     form = RevisionReadonlyForm
     list_display = ("pk", "revision", "sha1", "content_type",
                     "object_id", 'content_object', "created_at",
-                    "editor", "comment", "editor_ip", )
+                    "editor", "comment", "editor_ip", "reverted",)
     list_filter = ("created_at", "content_type", )
     search_fields = ("delta", "comment", )
     fields = ("reapply", "delta_repr", )
