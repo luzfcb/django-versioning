@@ -82,6 +82,11 @@ def get_field_data(obj, field):
     return obj._meta.get_field(field).value_to_string(obj)
 
 
+def get_field_str(obj, field):
+    """Returns field's string"""
+    return obj._meta.get_field(field).value_to_string(obj)
+
+
 def obj_diff(obj1, obj2):
     """Create a 'diff' from obj1 to obj2."""
     model = obj1.__class__

@@ -15,7 +15,7 @@ from django.conf import settings
 
 from . import _registry
 from .managers import RevisionManager
-from .utils import dmp, diff_split_by_fields, get_field_data, set_field_data
+from .utils import dmp, diff_split_by_fields, get_field_data, set_field_data, get_field_str
 
 try:
     str = unicode  # Python 2.* compatible
@@ -169,8 +169,8 @@ class Revision(models.Model):
         for field_name in fields:
             result.append("<b>{0}</b>".format(field_name))
             diffs = dmp.diff_main(
-                get_field_data(old, field_name),
-                get_field_data(next_rev, field_name)
+                get_field_str(old, field_name),
+                get_field_str(next_rev, field_name)
             )
             dmp.diff_cleanupSemantic(diffs)
             result.append(dmp.diff_prettyHtml(diffs))
