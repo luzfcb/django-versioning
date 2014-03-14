@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 import sys
 import base64
+import json
 
 try:
     import cPickle as pickle
@@ -8,6 +9,7 @@ except ImportError:
     import pickle
 
 from difflib import SequenceMatcher
+from django.db import models
 from django.utils.encoding import force_unicode
 
 #from django.utils.encoding import smart_unicode
@@ -69,6 +71,8 @@ def set_field_data(obj, field, data):
     # data = decode(data)
     if field_inst.null and data == 'None':
         data = None
+    elif isinstance(field_inst, models.ManyToManyField):
+        data = json.loads(data)
     else:
         data = field_inst.to_python(data)
     setattr(obj, field_inst.attname, data)
@@ -77,7 +81,10 @@ def set_field_data(obj, field, data):
 def get_field_data(obj, field):
     """Returns field's data"""
     # return encode(obj._meta.get_field(field)._get_val_from_obj(obj))
-    return obj._meta.get_field(field).value_to_string(obj)
+    field_inst = obj._meta.get_field(field)
+    if isinstance(field_inst, models.ManyToManyField) and not obj.pk:
+        return '[]'
+    return field_inst.value_to_string(obj)
 
 
 def get_field_str(obj, field):

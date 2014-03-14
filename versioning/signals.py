@@ -1,44 +1,15 @@
 from __future__ import absolute_import, unicode_literals
-from .middleware import get_request
-from .models import Revision
-from .utils import obj_diff, obj_is_changed
+from .transaction import transaction
 
 
-def pre_save(instance, **kwargs):
-    """
-    Pre-save signal handler
-    """
-    model = kwargs["sender"]
-    if not hasattr(instance, 'revision_info'):
-        instance.revision_info = {}
-    info = instance.revision_info
-
-    try:
-        prev = model._default_manager.get(pk=instance.pk)
-    except model.DoesNotExist:
-        prev = model()
-
-    if not obj_is_changed(prev, instance):
-        instance.revision_info = {}
-        return
-
-    info['delta'] = obj_diff(prev, instance)
-    request = get_request()
-    if request:
-        if not info.get('editor'):
-            info['editor'] = request.user
-        if not info.get('editor_ip'):
-            info['editor_ip'] = request.META.get("REMOTE_ADDR")
-    if not getattr(info.get('editor'), 'pk', None):  # Anonymuous
-        info['editor'] = None
+def pre_save(sender, instance, **kwargs):
+    """Pre-save signal handler"""
+    if True:  # TODO: Add management
+        transaction.begin()
+    transaction.add_obj(instance)
 
 
-def post_save(instance, **kwargs):
-    """
-    Post-save signal handler
-    """
-    info = getattr(instance, 'revision_info', {})
-    if info:
-        rev = Revision(**info)
-        rev.content_object = instance
-        rev.save()
+def post_save(sender, instance, **kwargs):
+    """Post-save signal handler"""
+    if True:  # TODO: Add management
+        transaction.commit()
