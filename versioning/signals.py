@@ -4,12 +4,10 @@ from .transaction import transaction
 
 def pre_save(sender, instance, **kwargs):
     """Pre-save signal handler"""
-    if True:  # TODO: Add management
-        transaction.begin()
+    transaction.begin()
     transaction.add_obj(instance)
 
 
 def post_save(sender, instance, **kwargs):
     """Post-save signal handler"""
-    if True:  # TODO: Add management
-        transaction.commit()
+    transaction.commit()
