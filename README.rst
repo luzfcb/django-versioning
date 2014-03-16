@@ -6,7 +6,7 @@ Django-versioning allows you to version the data stored in django models, and st
 
 Supports all field types excepts ManyToMany (currently).
 
-Forked from https://github.com/brosner/django-versioning
+Django-versioning as small as possible, and follows the `KISS principle <http://en.wikipedia.org/wiki/KISS_principle>`_.
 
 Usage
 ======
@@ -60,3 +60,5 @@ If you have already existent content, to create a first revision, simple run::
     ./manage.py versioning_setup wiki.Article -f
 
 You can also view revisions in admin, by clicking "History" button on change object page.
+
+Forked from https://github.com/brosner/django-versioning , Thanks to Brian Rosner.
