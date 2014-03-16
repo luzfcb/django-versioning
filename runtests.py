@@ -3,6 +3,8 @@ import warnings
 import os
 import sys
 
+warnings.simplefilter("default")
+
 
 def main():
     from django.conf import settings
@@ -34,8 +36,9 @@ def main():
         STATIC_URL = '/static/',
         TEST_RUNNER = 'django.test.simple.DjangoTestSuiteRunner',
         TEMPLATE_DIRS = [],
+        DEBUG = True,
         TEMPLATE_DEBUG = True,
-        ROOT_URLCONF = 'runtests'
+        ROOT_URLCONF = 'runtests',
     )
 
     from django.conf.urls import patterns, include, url
@@ -53,7 +56,6 @@ def main():
     TestRunner = get_runner(settings)
 
     test_runner = TestRunner(verbosity=1, interactive=False, failfast=False)
-    warnings.simplefilter("default")
     failures = test_runner.run_tests(['versioning'])
     sys.exit(failures)
 
