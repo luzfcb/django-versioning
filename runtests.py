@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
-import warnings
 import os
 import sys
-
-warnings.simplefilter("default")
 
 
 def main():
