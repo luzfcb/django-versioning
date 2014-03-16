@@ -53,7 +53,7 @@ def main():
     TestRunner = get_runner(settings)
 
     test_runner = TestRunner(verbosity=1, interactive=False, failfast=False)
-    warnings.simplefilter("ignore")
+    warnings.simplefilter("default")
     failures = test_runner.run_tests(['versioning'])
     sys.exit(failures)
 
