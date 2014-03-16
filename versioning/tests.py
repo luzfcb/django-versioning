@@ -10,6 +10,7 @@ from django.core import urlresolvers
 from django.http import HttpResponse
 from django.test import TestCase
 from django.utils.importlib import import_module
+from django.utils.timezone import now
 
 import versioning
 from .admin import autodiscover
@@ -29,6 +30,7 @@ class TestModel(models.Model):
     attr_int = models.IntegerField(blank=True, null=True)
     attr_fk = models.ForeignKey(TestFkModel, blank=True, null=True)
     attr_fk_notnull = models.ForeignKey(TestFkModel, related_name='foreign_key_notnull')
+    attr_datetime = models.DateTimeField(blank=True, null=True)
 
     class Meta:
         db_table = 'versioning_testmodel'
@@ -38,7 +40,7 @@ class TestModel(models.Model):
 
 versioning.register(
     TestModel,
-    ['attr_text', 'attr_int', 'attr_bool', 'attr_fk', 'attr_fk_notnull']
+    ['attr_text', 'attr_int', 'attr_bool', 'attr_fk', 'attr_fk_notnull', 'attr_datetime']
 )
 
 
@@ -98,6 +100,7 @@ class VersioningForAdminTest(TestCase):
         obj_2.attr_bool = True
         obj_2.attr_fk = obj_fk_1
         obj_2.attr_fk_notnull = obj_fk_1
+        obj_2.attr_datetime = now()
         obj_2.revision_info = {
             'editor': self.admin,
             'comment': 'comment 1',
@@ -111,6 +114,7 @@ class VersioningForAdminTest(TestCase):
         obj_3.attr_int = 3
         obj_3.attr_fk = obj_fk_2
         obj_3.attr_fk_notnull = obj_fk_2
+        obj_3.attr_datetime = None
         obj_3.revision_info = {
             'editor': self.admin,
             'comment': 'comment 1',
@@ -129,7 +133,22 @@ class VersioningForAdminTest(TestCase):
         self.assertEqual(obj_4.attr_bool, obj_1.attr_bool)
         self.assertEqual(obj_4.attr_fk, obj_1.attr_fk)
         self.assertEqual(obj_4.attr_fk_notnull, obj_1.attr_fk_notnull)
+        self.assertEqual(obj_4.attr_datetime, obj_1.attr_datetime)
         self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 4)
+
+        rev_2 = Revision.objects.get_for_object(obj_1).order_by('pk')[1]
+        self.assertEqual(rev_2.revision, 2)
+
+        rev_2.display_diff()
+        rev_2.reapply()
+
+        obj_5 = TestModel.objects.get(pk=obj_2.pk)
+        self.assertEqual(obj_5.attr_text, obj_2.attr_text)
+        self.assertEqual(obj_5.attr_bool, obj_2.attr_bool)
+        self.assertEqual(obj_5.attr_fk, obj_2.attr_fk)
+        self.assertEqual(obj_5.attr_fk_notnull, obj_2.attr_fk_notnull)
+        self.assertEqual(obj_5.attr_datetime, obj_2.attr_datetime)
+        self.assertEqual(Revision.objects.get_for_object(obj_2).count(), 5)
 
     def test_views(self):
         obj_fk_1 = TestFkModel.objects.create(

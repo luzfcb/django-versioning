@@ -73,6 +73,8 @@ def set_field_data(obj, field, data):
         data = None
     elif isinstance(field_inst, models.ManyToManyField):
         data = json.loads(data)
+    elif isinstance(field_inst, (models.DateTimeField, models.DateField, models.TimeField)) and not data and field_inst.null:
+        data = None
     else:
         data = field_inst.to_python(data)
     setattr(obj, field_inst.attname, data)
