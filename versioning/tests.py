@@ -7,6 +7,7 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.contenttypes.models import ContentType
 from django.core import urlresolvers
+from django.http import HttpResponse
 from django.test import TestCase
 from django.utils.importlib import import_module
 
@@ -32,6 +33,9 @@ class TestModel(models.Model):
     class Meta:
         db_table = 'versioning_testmodel'
 
+    def get_absolute_url(self):
+        return urlresolvers.reverse('versioning_testmodel', args=(self.pk,))
+
 versioning.register(
     TestModel,
     ['attr_text', 'attr_int', 'attr_bool', 'attr_fk', 'attr_fk_notnull']
@@ -49,6 +53,7 @@ urlconf_module = import_module(settings.ROOT_URLCONF)
 urlpatterns = patterns(
     '',
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^testmodel/(?P<pk>\d+)/', lambda request, pk: HttpResponse("Ok"), name='versioning_testmodel')
 ) + urlconf_module.urlpatterns
 
 
@@ -183,6 +188,18 @@ class VersioningForAdminTest(TestCase):
         self.assertContains(response, 'name="reapply"')
         self.assertContains(response, 'onclick="this.form.submit()"')
 
+        response = self.client.post(
+            urlresolvers.reverse('versioning_revision_reapply', args=(r.pk,)),
+            {'reapply': 1}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, obj_1.get_absolute_url(), 302)
+        self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 4)
+        self.assertEqual(
+            TestModel.objects.get(pk=obj_1.pk).attr_text,
+            "строка первая\nстрока измененная вторая\nстрока третья"
+        )
+
     def test_admin(self):
         obj_fk_1 = TestFkModel.objects.create(
             attr_text="техт",
@@ -236,3 +253,15 @@ class VersioningForAdminTest(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'name="reapply"')
         self.assertContains(response, 'onclick="this.form.submit()"')
+
+        response = self.client.post(
+            urlresolvers.reverse('admin:versioning_revision_change', args=(r.pk,)),
+            {'reapply': 1}
+        )
+        self.assertEqual(response.status_code, 302)
+        self.assertRedirects(response, urlresolvers.reverse('admin:versioning_revision_changelist'), 302)
+        self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 4)
+        self.assertEqual(
+            TestModel.objects.get(pk=obj_1.pk).attr_text,
+            "строка первая\nстрока измененная вторая\nстрока третья"
+        )
