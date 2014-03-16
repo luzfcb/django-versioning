@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
+from datetime import date
 from django.db import models
 from django.conf import settings
 from django.conf.urls import patterns, include, url
@@ -31,6 +32,7 @@ class TestModel(models.Model):
     attr_fk = models.ForeignKey(TestFkModel, blank=True, null=True)
     attr_fk_notnull = models.ForeignKey(TestFkModel, related_name='foreign_key_notnull')
     attr_datetime = models.DateTimeField(blank=True, null=True)
+    attr_date = models.DateField(blank=True, null=True)
 
     class Meta:
         db_table = 'versioning_testmodel'
@@ -40,7 +42,7 @@ class TestModel(models.Model):
 
 versioning.register(
     TestModel,
-    ['attr_text', 'attr_int', 'attr_bool', 'attr_fk', 'attr_fk_notnull', 'attr_datetime']
+    ['attr_text', 'attr_int', 'attr_bool', 'attr_fk', 'attr_fk_notnull', 'attr_datetime', 'attr_date']
 )
 
 
@@ -101,6 +103,7 @@ class VersioningForAdminTest(TestCase):
         obj_2.attr_fk = obj_fk_1
         obj_2.attr_fk_notnull = obj_fk_1
         obj_2.attr_datetime = now()
+        obj_2.attr_date = date.today()
         obj_2.revision_info = {
             'editor': self.admin,
             'comment': 'comment 1',
@@ -115,6 +118,7 @@ class VersioningForAdminTest(TestCase):
         obj_3.attr_fk = obj_fk_2
         obj_3.attr_fk_notnull = obj_fk_2
         obj_3.attr_datetime = None
+        obj_3.attr_date = None
         obj_3.revision_info = {
             'editor': self.admin,
             'comment': 'comment 1',
@@ -134,6 +138,7 @@ class VersioningForAdminTest(TestCase):
         self.assertEqual(obj_4.attr_fk, obj_1.attr_fk)
         self.assertEqual(obj_4.attr_fk_notnull, obj_1.attr_fk_notnull)
         self.assertEqual(obj_4.attr_datetime, obj_1.attr_datetime)
+        self.assertEqual(obj_4.attr_date, obj_1.attr_date)
         self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 4)
 
         rev_2 = Revision.objects.get_for_object(obj_1).order_by('pk')[1]
@@ -148,6 +153,7 @@ class VersioningForAdminTest(TestCase):
         self.assertEqual(obj_5.attr_fk, obj_2.attr_fk)
         self.assertEqual(obj_5.attr_fk_notnull, obj_2.attr_fk_notnull)
         self.assertEqual(obj_5.attr_datetime, obj_2.attr_datetime)
+        self.assertEqual(obj_5.attr_date, obj_2.attr_date)
         self.assertEqual(Revision.objects.get_for_object(obj_2).count(), 5)
 
     def test_views(self):
