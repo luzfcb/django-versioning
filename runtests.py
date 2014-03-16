@@ -31,6 +31,7 @@ def main():
             'django.middleware.clickjacking.XFrameOptionsMiddleware',
             "versioning.middleware.VersioningMiddleware",
         ],
+        STATIC_URL = '/static/',
         TEST_RUNNER = 'django.test.simple.DjangoTestSuiteRunner',
         TEMPLATE_DIRS = [],
         TEMPLATE_DEBUG = True,
@@ -40,8 +41,10 @@ def main():
     from django.conf.urls import patterns, include, url
     from django.contrib import admin
     global urlpatterns
-    urlpatterns = patterns('',
+    urlpatterns = patterns(
+        '',
         url(r'^admin/', include(admin.site.urls)),
+        url(r'^versioning/', include('versioning.urls')),
     )
     admin.autodiscover()
 

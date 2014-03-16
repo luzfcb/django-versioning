@@ -51,21 +51,26 @@ class RevisionAdmin(admin.ModelAdmin):
 admin.site.register(Revision, RevisionAdmin)
 
 
+class AdminVersionableMixIn(object):
+    """Versionable Admin class"""
+    object_history_template = 'versioning/admin/object_history.html'
+
+    def save_model(self, request, obj, form, change, *a, **kw):
+        """Binds to object the editor's info"""
+        obj.revision_info = {
+            'editor_ip': request.META.get("REMOTE_ADDR"),
+            'editor': request.user
+        }
+        return super(AdminVersionableMixIn, self).save_model(
+            request, obj, form, change, *a, **kw
+        )
+
+
 def make_admin_versionable(cls):
     """Make Admin class versionable"""
-    class AdminVersionable(cls):
-        """Versionable Admin class"""
-        object_history_template = 'versioning/admin/object_history.html'
+    class AdminVersionable(AdminVersionableMixIn, cls):
+        pass
 
-        def save_model(self, request, obj, form, change, *a, **kw):
-            """Binds to object the editor's info"""
-            obj.revision_info = {
-                'editor_ip': request.META.get("REMOTE_ADDR"),
-                'editor': request.user
-            }
-            return super(AdminVersionable, self).save_model(
-                request, obj, form, change, *a, **kw
-            )
     return AdminVersionable
 
 
@@ -74,9 +79,10 @@ def autodiscover():
     for model in _registry:
         if model in admin.site._registry:
             model_admin = admin.site._registry[model]
-            cls = model_admin.__class__
-            admin.site.unregister(model)
-            admin.site.register(model, make_admin_versionable(cls))
+            if not isinstance(model_admin, AdminVersionableMixIn):
+                cls = model_admin.__class__
+                admin.site.unregister(model)
+                admin.site.register(model, make_admin_versionable(cls))
 
 if getattr(settings, 'VERSIONING_ADMIN_AUTODISCOVER', True):
     autodiscover()

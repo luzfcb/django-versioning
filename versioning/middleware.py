@@ -21,5 +21,7 @@ class VersioningMiddleware(object):
         transaction.rollback()
 
     def process_response(self, request, response):
-        transaction.commit()
+        if transaction.scopes:
+            # if self.process_exception() hasn't called
+            transaction.commit()
         return response

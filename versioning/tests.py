@@ -1,10 +1,17 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 from django.db import models
+from django.conf import settings
+from django.conf.urls import patterns, include, url
+from django.contrib import admin
 from django.contrib.auth.models import User
+from django.contrib.contenttypes.models import ContentType
+from django.core import urlresolvers
 from django.test import TestCase
+from django.utils.importlib import import_module
 
 import versioning
+from .admin import autodiscover
 from .models import Revision
 
 
@@ -31,7 +38,23 @@ versioning.register(
 )
 
 
+class TestModelAdmin(admin.ModelAdmin):
+    pass
+
+admin.site.register(TestModel, TestModelAdmin)
+# admin.autodiscover()
+autodiscover()
+
+urlconf_module = import_module(settings.ROOT_URLCONF)
+urlpatterns = patterns(
+    '',
+    url(r'^admin/', include(admin.site.urls)),
+) + urlconf_module.urlpatterns
+
+
 class VersioningForAdminTest(TestCase):
+
+    urls = 'versioning.tests'
 
     def setUp(self):
         self.admin = User.objects.create_superuser(
@@ -102,3 +125,114 @@ class VersioningForAdminTest(TestCase):
         self.assertEqual(obj_4.attr_fk, obj_1.attr_fk)
         self.assertEqual(obj_4.attr_fk_notnull, obj_1.attr_fk_notnull)
         self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 4)
+
+    def test_views(self):
+        obj_fk_1 = TestFkModel.objects.create(
+            attr_text="техт",
+        )
+        obj_1 = TestModel(
+            attr_text="строка первая\nстрока вторая\nстрока третья",
+            attr_fk=None,
+            attr_fk_notnull=obj_fk_1,
+            attr_int=1
+        )
+        obj_1.revision_info = {
+            'editor': self.admin,
+            'comment': 'comment 1',
+        }
+        obj_1.save()
+        self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 1)
+
+        obj_2 = TestModel.objects.get(pk=obj_1.pk)
+        obj_2.attr_text = "строка первая\nстрока измененная вторая\nстрока третья"
+        obj_2.attr_bool = True
+        obj_2.attr_fk = obj_fk_1
+        obj_2.attr_fk_notnull = obj_fk_1
+        obj_2.revision_info = {
+            'editor': self.admin,
+            'comment': 'comment 1',
+        }
+        obj_2.save()
+        self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 2)
+
+        obj_3 = TestModel.objects.get(pk=obj_1.pk)
+        obj_3.attr_text = "строка первая\nстрока измененная снова вторая\nстрока третья"
+        obj_3.attr_bool = False
+        obj_3.attr_int = 3
+        obj_3.revision_info = {
+            'editor': self.admin,
+            'comment': 'comment 1',
+        }
+        obj_3.save()
+        self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 3)
+
+        response = self.client.get(urlresolvers.reverse('versioning_revision_list', kwargs={
+            'content_type': ContentType.objects.get_for_model(TestModel).pk,
+            'object_id': obj_1.pk
+        }))
+        self.assertEqual(response.status_code, 200)
+        revisions = Revision.objects.get_for_object(obj_1)
+        self.assertEqual(len(revisions), 3)
+
+        for r in revisions:
+            self.assertContains(response, urlresolvers.reverse('versioning_revision_reapply', args=(r.pk,)))
+
+        r = revisions[1]
+        response = self.client.get(urlresolvers.reverse('versioning_revision_reapply', args=(r.pk,)))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="reapply"')
+        self.assertContains(response, 'onclick="this.form.submit()"')
+
+    def test_admin(self):
+        obj_fk_1 = TestFkModel.objects.create(
+            attr_text="техт",
+        )
+        obj_1 = TestModel(
+            attr_text="строка первая\nстрока вторая\nстрока третья",
+            attr_fk=None,
+            attr_fk_notnull=obj_fk_1,
+            attr_int=1
+        )
+        obj_1.revision_info = {
+            'editor': self.admin,
+            'comment': 'comment 1',
+        }
+        obj_1.save()
+        self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 1)
+
+        obj_2 = TestModel.objects.get(pk=obj_1.pk)
+        obj_2.attr_text = "строка первая\nстрока измененная вторая\nстрока третья"
+        obj_2.attr_bool = True
+        obj_2.attr_fk = obj_fk_1
+        obj_2.attr_fk_notnull = obj_fk_1
+        obj_2.revision_info = {
+            'editor': self.admin,
+            'comment': 'comment 1',
+        }
+        obj_2.save()
+        self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 2)
+
+        obj_3 = TestModel.objects.get(pk=obj_1.pk)
+        obj_3.attr_text = "строка первая\nстрока измененная снова вторая\nстрока третья"
+        obj_3.attr_bool = False
+        obj_3.attr_int = 3
+        obj_3.revision_info = {
+            'editor': self.admin,
+            'comment': 'comment 1',
+        }
+        obj_3.save()
+        self.assertEqual(Revision.objects.get_for_object(obj_1).count(), 3)
+
+        response = self.client.get(urlresolvers.reverse('admin:versioning_testmodel_history', args=(obj_1.pk,)))
+        self.assertEqual(response.status_code, 200)
+        revisions = Revision.objects.get_for_object(obj_1)
+        self.assertEqual(len(revisions), 3)
+
+        for r in revisions:
+            self.assertContains(response, urlresolvers.reverse('admin:versioning_revision_change', args=(r.pk,)))
+
+        r = revisions[1]
+        response = self.client.get(urlresolvers.reverse('admin:versioning_revision_change', args=(r.pk,)))
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'name="reapply"')
+        self.assertContains(response, 'onclick="this.form.submit()"')
