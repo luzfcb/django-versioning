@@ -38,6 +38,7 @@ dmp = diff_match_patch()
 
 def encode(val):
     if not isinstance(val, string_types):
+        # XML? JSON? pickle?
         return PICKLED_MARKER + base64.standard_b64encode(
             pickle.dumps(val, protocol=pickle.HIGHEST_PROTOCOL)
         ).decode('ascii')
