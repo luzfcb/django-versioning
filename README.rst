@@ -8,6 +8,9 @@ Supports all field types excepts ManyToMany (currently).
 
 Django-versioning as small as possible, and follows the `KISS principle <http://en.wikipedia.org/wiki/KISS_principle>`_.
 
+Home Page: https://bitbucket.org/emacsway/django-versioning
+
+
 Usage
 ======
 
