@@ -1,6 +1,6 @@
-==================
-Django-Versioning
-==================
+==========================
+[MIRROR] Django-Versioning
+==========================
 
 Django-versioning allows you to version the data stored in django models, and stores only diff, not content copy.
 
