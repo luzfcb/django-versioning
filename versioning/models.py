@@ -46,7 +46,7 @@ class Revision(models.Model):
     editor = models.ForeignKey(UserModel, verbose_name=_('Editor'),
                                blank=True, null=True,
                                on_delete=models.SET_NULL)
-    editor_ip = models.IPAddressField(_("IP Address of the Editor"),
+    editor_ip = models.GenericIPAddressField(_("IP Address of the Editor"),
                                       blank=True, null=True)
 
     objects = RevisionManager()
