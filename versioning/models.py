@@ -7,7 +7,10 @@ except ImportError:
     from datetime import datetime
 
 from django.db import models, IntegrityError
-from django.contrib.contenttypes import generic
+
+# from django.contrib.contenttypes import generic
+from django.contrib.contenttypes.fields import GenericForeignKey
+
 from django.contrib.contenttypes.models import ContentType
 from django.utils.encoding import force_unicode
 from django.utils.translation import ugettext_lazy as _
@@ -30,7 +33,9 @@ class Revision(models.Model):
     """
     object_id = models.CharField(max_length=255, db_index=True)
     content_type = models.ForeignKey(ContentType)
-    content_object = generic.GenericForeignKey("content_type", "object_id")
+    
+    # content_object = generic.GenericForeignKey("content_type", "object_id")
+    content_object = GenericForeignKey("content_type", "object_id")
 
     revision = models.IntegerField(_("Revision Number"), db_index=True)
     reverted = models.BooleanField(_("Reverted Revision"), default=False,
